@@ -16,10 +16,15 @@ import mobileAds from 'react-native-google-mobile-ads';
 import SplashScreen from "react-native-splash-screen";
 import { COLORS } from './src/theme';
 
-const customFetch = async (uri, options) => {
+const customFetch = async (uri, options, retries = 2) => {
   try {
     const response = await fetch(uri, options);
     const contentType = response.headers ? response.headers.get("content-type") : "";
+
+    if (response.status === 503 && retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      return customFetch(uri, options, retries - 1);
+    }
 
     if (!response.ok || (contentType && !contentType.includes("application/json"))) {
       const text = await response.text();
@@ -28,7 +33,7 @@ const customFetch = async (uri, options) => {
           JSON.stringify({
             errors: [
               {
-                message: `Server returned status ${response.status}. Backend server is currently offline or unreachable.`
+                message: `Server is spinning up. Please tap Create Account again in a few seconds.`
               }
             ]
           }),
@@ -41,6 +46,10 @@ const customFetch = async (uri, options) => {
     }
     return response;
   } catch (error) {
+    if (retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return customFetch(uri, options, retries - 1);
+    }
     return new Response(
       JSON.stringify({
         errors: [
