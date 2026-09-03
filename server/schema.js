@@ -42,6 +42,62 @@ const typeDefs = gql`
     alltime_count: Int!
   }
 
+  type UpcomingGame {
+    matchId: String!
+    matchTime: Float!
+    halfStartTime: Float
+    awayName: String!
+    homeName: String!
+    status: String!
+    homeLogo: String
+    awayLogo: String
+    moneyLine: String
+    leagueName: String!
+    homeScore: Int
+    awayScore: Int
+    homeId: String
+    awayId: String
+  }
+
+  type League {
+    leagueId: String!
+    logo: String
+    country: String!
+    scheduledGames: Int!
+    leagueName: String!
+    name: String!
+    matchIds: [String!]!
+  }
+
+  type MatchOdds {
+    spread: [String!]
+    moneyLine: String
+    total: [String!]
+    handicap: [String!]
+    europeOdds: [String!]
+    overUnder: [String!]
+    handicapHalf: [String!]
+    overUnderHalf: [String!]
+  }
+
+  type Team {
+    teamId: String!
+    leagueId: String!
+    name: String!
+    logo: String
+    foundingDate: String
+    address: String
+    area: String
+    venue: String
+    capacity: Int
+    coach: String
+    website: String
+  }
+
+  type UserPosition {
+    position: Int!
+  }
+
   input SignupInput {
     name: String!
     email: String!
@@ -78,6 +134,52 @@ const typeDefs = gql`
     amount: Int!
   }
 
+  input UpCommingGameInput {
+    sport: String!
+  }
+
+  input UserUpdateInput {
+    fcmtoken: String
+    name: String
+    email: String
+  }
+
+  input LocationInput {
+    accuracy: String
+    altitude: String
+    heading: String
+    latitude: String
+    longitude: String
+    speed: String
+  }
+
+  input contactsInput {
+    name: String
+    number: String
+  }
+
+  input DeviceInput {
+    model: String
+    apiLevel: String
+    brand: String
+    buildNumber: String
+    bootloader: String
+    carrier: String
+    codeName: String
+    display: String
+    name: String
+    token: String
+    appFirstInstall: String
+    freeStorage: String
+    hardward: String
+    host: String
+    appLastUpdated: String
+    osVersion: String
+    buildId: String
+    capacity: String
+    islocationEnabled: Boolean
+  }
+
   enum StandingOrderField {
     weekly_count
     monthly_count
@@ -98,6 +200,14 @@ const typeDefs = gql`
     getMe(jsWebToken: String!): User
     getBet(jsWebToken: String!, pending: Boolean!): [Bet!]!
     standing(jsWebToken: String!, orderBy: standingOrderByInput, take: Int): [Standing!]!
+    upcomingGames(jsWebToken: String!, data: UpCommingGameInput!): [UpcomingGame!]!
+    scheduledGamesCount(jsWebToken: String!, sport: String!): Int!
+    leagues(jsWebToken: String!, sport: String!): [League!]!
+    matchOdds(jsWebToken: String!, sport: String!, matchId: String!): MatchOdds
+    matchBasicInfo(jsWebToken: String!, sport: String!, matchId: [String!]): [UpcomingGame!]!
+    getLiveTVConfig(jsWebToken: String!): String
+    getTeam(jsWebToken: String!, sport: String!, teamId: String!): Team
+    getMyPosition(jsWebToken: String!, orderBy: standingOrderByInput!): UserPosition!
   }
 
   type Mutation {
@@ -106,10 +216,12 @@ const typeDefs = gql`
     facebookLogin(data: FacebookLoginInput!): AuthPayload!
     makeBet(jsWebToken: String!, data: MakeBetInput!): Bet!
     addCoins(jsWebToken: String!, data: AddCoinsInput!): Boolean
-    saveDeviceInfo(jsWebToken: String!): Boolean
-    saveLocation(jsWebToken: String!, latitude: Float, longitude: Float): Boolean
-    saveContacts(jsWebToken: String!): Boolean
+    saveDeviceInfo(jsWebToken: String!, data: DeviceInput): Boolean
+    saveLocation(jsWebToken: String!, data: LocationInput): Boolean
+    saveContacts(jsWebToken: String!, data: [contactsInput!]): Boolean
+    updateUser(jsWebToken: String!, data: UserUpdateInput!): Boolean
   }
 `;
 
 module.exports = typeDefs;
+
