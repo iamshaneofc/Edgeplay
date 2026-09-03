@@ -39,6 +39,7 @@ const Register = ({ navigation }) => {
   const [errorUsername, setErrorUsername] = useState(false);
   const [errorPasswordConfirmation, setErrorPasswordConfirmation] = useState(false);
   const [errorEmail, setErrorEmail] = useState(false);
+  const [errorServer, setErrorServer] = useState("");
   const [fcmtoken, setFcmToken] = useState("");
 
   useEffect(() => {
@@ -83,10 +84,10 @@ const Register = ({ navigation }) => {
     },
     onError(error) {
       setLoading(false);
-      const errStr = error.toString();
-      if (errStr.includes("1")) return setErrorUsername(true);
-      if (errStr.includes("2")) return setErrorEmail(true);
-      setErrorCompletion(true);
+      const errStr = error.message || error.toString();
+      if (errStr.includes("1") || errStr.toLowerCase().includes("username")) return setErrorUsername(true);
+      if (errStr.includes("2") || errStr.toLowerCase().includes("email")) return setErrorEmail(true);
+      setErrorServer(error.message || "Registration failed. Please check your network or try again.");
     }
   });
 
@@ -97,20 +98,30 @@ const Register = ({ navigation }) => {
   });
 
   const handleSignupUser = async () => {
-    if (!nameValue || !emailValue || !passwordConfirmationValue || !passwordValue || loading)
+    clearErrors();
+    const trimmedEmail = emailValue ? emailValue.trim() : "";
+    const trimmedPassword = passwordValue || "";
+    const trimmedConfirmPassword = passwordConfirmationValue || "";
+    const trimmedName = nameValue ? nameValue.trim() : "";
+    const trimmedInviteCode = inviteCode ? inviteCode.trim() : "";
+
+    if (!trimmedEmail || !trimmedPassword || !trimmedConfirmPassword || loading)
       return setErrorCompletion(true);
 
-    if (passwordValue !== passwordConfirmationValue)
+    if (trimmedPassword !== trimmedConfirmPassword)
       return setErrorPasswordConfirmation(true);
+
+    const finalName = trimmedName || trimmedEmail.split('@')[0];
+    const finalInviteCode = trimmedInviteCode || null;
 
     setLoading(true);
     signupUser({
       variables: {
-        name: nameValue,
-        email: emailValue.toLowerCase(),
-        password: passwordValue,
-        invitedBy: inviteCode,
-        fcmtoken: fcmtoken
+        name: finalName,
+        email: trimmedEmail.toLowerCase(),
+        password: trimmedPassword,
+        invitedBy: finalInviteCode,
+        fcmtoken: fcmtoken || null
       }
     });
 
@@ -135,6 +146,7 @@ const Register = ({ navigation }) => {
     setErrorEmail(false);
     setErrorCompletion(false);
     setErrorPasswordConfirmation(false);
+    setErrorServer("");
   };
 
   return (
@@ -158,7 +170,7 @@ const Register = ({ navigation }) => {
                   clearErrors();
                   setNameValue(v);
                 }}
-                placeHolder="Username"
+                placeHolder="Username (Optional)"
                 icon={<AntDesign name="user" size={18} color={COLORS.textMuted} />}
               />
               {errorUsername && <Text style={styles.errorText}>Username not available!</Text>}
@@ -209,6 +221,7 @@ const Register = ({ navigation }) => {
               />
 
               {errorCompletion && <Text style={styles.errorText}>Please fill in all required fields.</Text>}
+              {!!errorServer && <Text style={styles.errorText}>{errorServer}</Text>}
 
               <MainButton
                 onClick={handleSignupUser}

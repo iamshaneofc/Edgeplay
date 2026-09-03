@@ -1,6 +1,6 @@
 import React from "react";
 import type { Node } from 'react';
-import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
+import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink } from '@apollo/client';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import FontAwesome5Icons from 'react-native-vector-icons/FontAwesome5';
@@ -16,8 +16,54 @@ import mobileAds from 'react-native-google-mobile-ads';
 import SplashScreen from "react-native-splash-screen";
 import { COLORS } from './src/theme';
 
-const client = new ApolloClient({
+const customFetch = async (uri, options) => {
+  try {
+    const response = await fetch(uri, options);
+    const contentType = response.headers ? response.headers.get("content-type") : "";
+
+    if (!response.ok || (contentType && !contentType.includes("application/json"))) {
+      const text = await response.text();
+      if (text.startsWith("<") || (contentType && !contentType.includes("application/json"))) {
+        return new Response(
+          JSON.stringify({
+            errors: [
+              {
+                message: `Server returned status ${response.status}. Backend server is currently offline or unreachable.`
+              }
+            ]
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+    }
+    return response;
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        errors: [
+          {
+            message: "Unable to connect to server. Please check your internet connection."
+          }
+        ]
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+  }
+};
+
+const httpLink = createHttpLink({
   uri: Platform.OS === "ios" ? IOS_API_HOST : ANDROID_API_HOST,
+  fetch: customFetch
+});
+
+const client = new ApolloClient({
+  link: httpLink,
   cache: new InMemoryCache()
 });
 
@@ -29,7 +75,9 @@ mobileAds()
 const Drawer = createDrawerNavigator();
 
 const App: () => Node = () => {
-  SplashScreen.hide();
+  React.useEffect(() => {
+    SplashScreen.hide();
+  }, []);
 
   const routeNameRef = React.useRef();
   const navigationRef = React.useRef();

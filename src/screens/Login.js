@@ -90,15 +90,18 @@ const Login = ({ navigation }) => {
   });
 
   const handleLogin = async () => {
-    if (!emailValue || !passwordValue || loading)
+    const trimmedEmail = emailValue ? emailValue.trim() : "";
+    const trimmedPassword = passwordValue || "";
+
+    if (!trimmedEmail || !trimmedPassword || loading)
       return setErrorCompletion(true);
 
     setLoading(true);
     login({
       variables: {
-        email: emailValue.toLowerCase(),
-        password: passwordValue,
-        fcmtoken: fcmToken
+        email: trimmedEmail.toLowerCase(),
+        password: trimmedPassword,
+        fcmtoken: fcmToken || null
       }
     });
 
