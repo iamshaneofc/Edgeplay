@@ -1,8 +1,8 @@
-# SportsKing
+# Edgeplay
 
 <p align="center">
   <img width="150" height="150" src="https://github.com/ThalKod/Sport_King/assets/32584079/109800ad-91db-4c9f-bb0c-15bf1aa0be15"> </br>
-  SportsKing is a sports betting app built with react native.
+  Edgeplay is a sports betting app built with React Native.
 </p>
 
 </br>
@@ -26,14 +26,14 @@
 
 Clone the repo:
 ```js
- git clone https://github.com/ThalKod/Sport_King.git
+ git clone https://github.com/iamshaneofc/Edgeplay.git
 ```
  ### Install
  
  Install the node modules:
  
  ```bash
-  $ cd Sport_king
+  $ cd Edgeplay
   $ yarn install
  ```
  ### Run the project
@@ -54,28 +54,3 @@ Clone the repo:
 ## Contribution
 
 Feel Free to contribute, PR are the most welcome :)
-
-## License
-
-MIT License
-
-Copyright (c) 2022 Thal Marcelin
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-

@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-    Text,
-    StyleSheet,
-    Image,
-    TouchableOpacity
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity
 } from "react-native";
-import { useQuery, useLazyQuery } from "@apollo/client";
+import { useLazyQuery } from "@apollo/client";
 import { GET_SCHEDULED_GAMES_COUNT } from "../graph-operations";
 import { moderateScale } from "react-native-size-matters";
-import ArrowTOuch from "../assets/arrow.png";
-import {useSelector} from 'react-redux';
-import { truncate} from '../utils';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { useSelector } from 'react-redux';
+import { truncate } from '../utils';
+import { COLORS, FONT_SIZE, RADIUS, SPACING, SHADOWS } from "../theme";
 
 const EventListSingle = ({ request, text, icon, liveCount, onPress }) => {
   const [gamesCount, setGameCount] = useState(0);
@@ -21,80 +22,105 @@ const EventListSingle = ({ request, text, icon, liveCount, onPress }) => {
     getScheduledGamesCount();
   }, []);
 
-  const [getScheduledGamesCount, { loading }]= useLazyQuery(GET_SCHEDULED_GAMES_COUNT, {
+  const [getScheduledGamesCount] = useLazyQuery(GET_SCHEDULED_GAMES_COUNT, {
     fetchPolicy: 'no-cache',
     pollInterval: 900000,
     skip: !request,
     variables: {
       jsWebToken: user.jsWebToken,
-      sport: text.toLowerCase()
+      sport: text ? text.toLowerCase() : "football"
     },
-    onCompleted(data){
-      console.log("request", request);
-      if(request){
-        console.log("scheduled games", data);
+    onCompleted(data) {
+      if (request && data) {
         setGameCount(data.scheduledGamesCount);
       }
     }
   });
 
+  const countValue = request ? gamesCount : liveCount;
+
   return (
-      <TouchableOpacity onPress={onPress} style={styles.container}>
-        <View style={{ flexDirection: "row", alignItems: "center"}}>
-          { request?
-              <Image style={styles.sportImageStyle} source={icon}/> :
-              <Image style={styles.sportImageStyle} source={{ uri: icon }}/>
-          }
-          <Text adjustsFontSizeToFit style={styles.text}>{truncate(text, 25)}</Text>
+    <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={[styles.container, SHADOWS.card]}>
+      <View style={styles.leftRow}>
+        <View style={styles.iconContainer}>
+          {request ? (
+            <Image style={styles.sportImageStyle} source={icon} />
+          ) : (
+            <Image style={styles.sportImageStyle} source={{ uri: icon }} />
+          )}
         </View>
-        <View style={{ flexDirection: "row", alignItems: "center"}}>
-          <View style={styles.liveCount}>
-            <Text style={styles.liveCountText}>{request? gamesCount : liveCount}</Text>
-          </View>
-          <Image style={styles.arrowImageStyle} source={ArrowTOuch}/>
+        <Text adjustsFontSizeToFit style={styles.text}>
+          {truncate(text || "", 26)}
+        </Text>
+      </View>
+
+      <View style={styles.rightRow}>
+        <View style={styles.liveCount}>
+          <Text style={styles.liveCountText}>{countValue ?? 0}</Text>
         </View>
-      </TouchableOpacity>
-  )
+        <MaterialIcons name="chevron-right" size={24} color={COLORS.textMuted} style={styles.arrowIcon} />
+      </View>
+    </TouchableOpacity>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#140A35",
-    height: moderateScale(55),
-    paddingVertical: moderateScale(10),
-    paddingHorizontal: moderateScale(20),
+    backgroundColor: COLORS.cardBg,
+    height: moderateScale(56),
+    paddingHorizontal: SPACING.md,
     alignItems: "center",
     justifyContent: "space-between",
     flexDirection: "row",
-    borderRadius: moderateScale(5),
-    marginBottom: moderateScale(5)
+    borderRadius: RADIUS.lg,
+    marginBottom: moderateScale(8),
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
   },
-  text: {
-    color: "#fff",
-    fontFamily: "OpenSans-Bold",
-    fontSize: moderateScale(14)
+  leftRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  iconContainer: {
+    width: moderateScale(32),
+    height: moderateScale(32),
+    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.cardBgLighter,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: SPACING.sm,
   },
   sportImageStyle: {
-    width: moderateScale(16),
-    height: moderateScale(16),
+    width: moderateScale(20),
+    height: moderateScale(20),
     resizeMode: "contain",
-    marginRight: moderateScale(10)
   },
-  arrowImageStyle: {
-    width: moderateScale(30),
-    height: moderateScale(30),
-    resizeMode: "contain",
-    marginLeft: moderateScale(15)
+  text: {
+    color: COLORS.textPrimary,
+    fontWeight: "700",
+    fontSize: FONT_SIZE.sm,
+    flex: 1,
+  },
+  rightRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   liveCount: {
-    backgroundColor: "#716E7C",
-    width: moderateScale(50),
-    height: moderateScale(25),
+    backgroundColor: 'rgba(0, 230, 118, 0.15)',
+    paddingHorizontal: moderateScale(10),
+    paddingVertical: moderateScale(3),
+    borderRadius: RADIUS.round,
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
   },
   liveCountText: {
-    color: "#FEB400",
+    color: COLORS.primary,
+    fontWeight: "800",
+    fontSize: FONT_SIZE.xs,
+  },
+  arrowIcon: {
+    marginLeft: moderateScale(6),
   }
 });
 

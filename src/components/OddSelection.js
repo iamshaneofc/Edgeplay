@@ -6,38 +6,52 @@ import {
   TouchableOpacity
 } from "react-native";
 import { moderateScale } from "react-native-size-matters";
+import { COLORS, RADIUS, FONT_SIZE } from "../theme";
 
 const OddSelection = ({ selection, odd, onOddSelected, disabled, large }) => {
   return (
-    <TouchableOpacity disabled={disabled} onPress={onOddSelected} style={[styles.container, { backgroundColor: disabled? "#000" : "#2A1474", width: large? "48%" : "32%"}]}>
-      <Text style={styles.text}>{selection}</Text>
-      <View style={styles.separator}/>
-      <Text style={styles.text}>{odd}</Text>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      disabled={disabled}
+      onPress={onOddSelected}
+      style={[
+        styles.container,
+        disabled && styles.disabled,
+        { width: large ? "48%" : "31%" }
+      ]}
+    >
+      <Text style={styles.selectionText}>{selection}</Text>
+      <Text style={styles.oddText}>{odd || "-"}</Text>
     </TouchableOpacity>
-  )
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
-    height: moderateScale(25),
+    height: moderateScale(34),
     alignItems: "center",
-    borderRadius: moderateScale(15),
-    width: "32%",
-    backgroundColor: "#2A1474",
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.cardBgLighter,
     flexDirection: "row",
     paddingHorizontal: moderateScale(10),
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
   },
-  text: {
-    color: "#fff"
+  disabled: {
+    opacity: 0.4,
+    backgroundColor: COLORS.bgSecondary,
   },
-  separator: {
-    position: "absolute",
-    height: "100%",
-    width: moderateScale(1),
-    backgroundColor: "#000000",
-    right: moderateScale(45)
-  }
+  selectionText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZE.xs,
+    fontWeight: "600",
+  },
+  oddText: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZE.sm,
+    fontWeight: "700",
+  },
 });
 
 export default OddSelection;

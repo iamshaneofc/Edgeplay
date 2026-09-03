@@ -1,27 +1,26 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-  Text,
-  StyleSheet, FlatList, ActivityIndicator,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
 } from 'react-native';
-import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import BetSlipSingle from "../components/BetSlipSingle";
-import { moderateScale } from "react-native-size-matters";
-import {useQuery, useLazyQuery} from '@apollo/client';
+import EmptyState from "../components/EmptyState";
+import { useLazyQuery } from '@apollo/client';
 import { GET_BET } from '../graph-operations';
-import {useSelector, useDispatch} from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { NavigationContext } from "../context";
-import AntDesignIcons from 'react-native-vector-icons/AntDesign';
 import NetInfo from '@react-native-community/netinfo';
 import InAppReview from 'react-native-in-app-review';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { persistAppReviewLastTime } from '../redux/features/userSlice';
 import moment from "moment";
-
+import { COLORS, FONT_SIZE, SPACING } from "../theme";
 
 const Tab = createMaterialTopTabNavigator();
-
 
 const ActiveBet = ({ navigation }) => {
   const user = useSelector(state => state.user);
@@ -31,129 +30,108 @@ const ActiveBet = ({ navigation }) => {
 
   useEffect(() => {
     const unsubscribeNetInfo = NetInfo.addEventListener(state => {
-      console.log("Connection type", state);
       setIsConnected(state.isConnected);
     });
 
     return () => {
       unsubscribeNetInfo();
-    }
+    };
   }, []);
 
   useFocusEffect(
-    React.useCallback(  () => {
+    React.useCallback(() => {
       getBet();
 
       async function showInAppReview() {
-        const totalBetCount = await AsyncStorage.getItem("totalBetCount");
-        const appReviewLastTime = await AsyncStorage.getItem("appReviewLastTime");
+        try {
+          const totalBetCount = await AsyncStorage.getItem("totalBetCount");
+          const appReviewLastTime = await AsyncStorage.getItem("appReviewLastTime");
 
-        if(totalBetCount > 5){
-          if(!appReviewLastTime){
-            InAppReview.RequestInAppReview()
-              .then((hasFlowFinishedSuccessfully) => {
-
-                if (hasFlowFinishedSuccessfully) {
-                  console.log("has finished persist", hasFlowFinishedSuccessfully);
-                  dispatch(persistAppReviewLastTime({ appReviewLastTime: moment().toString()}))
-                }
-              })
-              .catch((error) => console.log(error));
-          }else {
-            if(moment().diff(moment(appReviewLastTime), "days") >= 10){
+          if (totalBetCount > 5) {
+            if (!appReviewLastTime) {
               InAppReview.RequestInAppReview()
                 .then((hasFlowFinishedSuccessfully) => {
-
                   if (hasFlowFinishedSuccessfully) {
-                    console.log("has finished persist", hasFlowFinishedSuccessfully);
-                    dispatch(persistAppReviewLastTime({ appReviewLastTime: moment().toString()}))
+                    dispatch(persistAppReviewLastTime({ appReviewLastTime: moment().toString() }));
                   }
                 })
                 .catch((error) => console.log(error));
+            } else {
+              if (moment().diff(moment(appReviewLastTime), "days") >= 10) {
+                InAppReview.RequestInAppReview()
+                  .then((hasFlowFinishedSuccessfully) => {
+                    if (hasFlowFinishedSuccessfully) {
+                      dispatch(persistAppReviewLastTime({ appReviewLastTime: moment().toString() }));
+                    }
+                  })
+                  .catch((error) => console.log(error));
+              }
             }
           }
+        } catch (e) {
+          console.log(e);
         }
       }
 
-      showInAppReview()
-
+      showInAppReview();
     }, [])
   );
 
-  const [getBet,  { loading }] = useLazyQuery(GET_BET, {
+  const [getBet, { loading }] = useLazyQuery(GET_BET, {
     fetchPolicy: 'no-cache',
     variables: {
       jsWebToken: user.jsWebToken,
       pending: true
     },
-    onCompleted(data){
-      // console.log("Active Bet data : ", data);
-      setBetData(data.getBet);
+    onCompleted(data) {
+      if (data && data.getBet) setBetData(data.getBet);
     }
   });
 
-  const renderCards = ({ item }) => {
-    return (
-        <BetSlipSingle item={item}/>
-    )
-  };
+  const renderCards = ({ item }) => (
+    <BetSlipSingle item={item} />
+  );
 
-  if(loading){
+  if (loading) {
     return (
-        <View style={{ backgroundColor: "#1C0C4F", flex: 1, alignItems: "center", justifyContent: "center"}}>
-          <ActivityIndicator size="large" color="#fff"/>
-        </View>
-    )
-  }
-
-  if(betData.length <= 0) {
-    return (
-        <View style={{ backgroundColor: "#1C0C4F", flex: 1, alignItems: "center", justifyContent: "center"}}>
-          <Text style={{ color: "#fff", fontSize: moderateScale(16), textAlign: "center"}}>No pending games.</Text>
-        </View>
-    )
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
   }
 
   return (
-      <View style={styles.container}>
-        <FlatList
-            data={betData}
-            keyExtractor={(items) => items.id.toString()}
-            renderItem={renderCards}
-        />
-        {/* isConnected &&
-        <BannerAd
-            unitId={adUnitId}
-            size={BannerAdSize.FULL_BANNER}
-            onAdLoaded={() => console.log("Ads loaded")}
-            onAdFailedToLoad={() => {
-              console.log("ads failed to load");
-            }}
-        /> */}
-      </View>
-  )
+    <View style={styles.container}>
+      <FlatList
+        data={betData}
+        keyExtractor={(items) => items.id.toString()}
+        renderItem={renderCards}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <EmptyState
+            icon="query-builder"
+            title="No Active Predictions"
+            description="You don't have any pending predictions right now. Explore upcoming matches to place a prediction!"
+          />
+        }
+      />
+    </View>
+  );
 };
 
 const EndedBet = ({ navigation }) => {
   const user = useSelector(state => state.user);
   const [betData, setBetData] = useState([]);
-  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      console.log("loading");
       getBet();
-    });
-
-    const unsubscribeNetInfo = NetInfo.addEventListener(state => {
-      console.log("Connection type", state);
-      setIsConnected(state.isConnected);
     });
 
     return () => {
       unsubscribe();
-      unsubscribeNetInfo();
-    }
+    };
   }, []);
 
   const [getBet, { loading }] = useLazyQuery(GET_BET, {
@@ -162,52 +140,41 @@ const EndedBet = ({ navigation }) => {
       jsWebToken: user.jsWebToken,
       pending: false
     },
-    onCompleted(data){
-      console.log("Ended Bet data : ", data);
-      setBetData(data.getBet)
+    onCompleted(data) {
+      if (data && data.getBet) setBetData(data.getBet);
     }
   });
 
-  const renderCards = ({ item }) => {
-    return (
-        <BetSlipSingle eventIsOver item={item}/>
-    )
-  };
+  const renderCards = ({ item }) => (
+    <BetSlipSingle eventIsOver item={item} />
+  );
 
-  if(loading){
+  if (loading) {
     return (
-        <View style={{ backgroundColor: "#1C0C4F", flex: 1, alignItems: "center", justifyContent: "center"}}>
-          <ActivityIndicator size="large" color="#fff"/>
-        </View>
-    )
-  }
-
-  if(betData.length <= 0) {
-    return (
-        <View style={{ backgroundColor: "#1C0C4F", flex: 1, alignItems: "center", justifyContent: "center"}}>
-          <Text style={{ color: "#fff", fontSize: moderateScale(16), textAlign: "center"}}>No Games.</Text>
-        </View>
-    )
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
   }
 
   return (
-      <View style={styles.container}>
-        <FlatList
-            data={betData}
-            keyExtractor={(items) => items.id.toString()}
-            renderItem={renderCards}
-        />
-        {/* isConnected &&
-        <BannerAd
-            unitId={adUnitId}
-            size={BannerAdSize.FULL_BANNER}
-            onAdLoaded={() => console.log("Ads loaded")}
-            onAdFailedToLoad={() => {
-              console.log("ads failed to load");
-            }}
-        /> */}
-      </View>
-  )
+    <View style={styles.container}>
+      <FlatList
+        data={betData}
+        keyExtractor={(items) => items.id.toString()}
+        renderItem={renderCards}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <EmptyState
+            icon="history"
+            title="No Prediction History"
+            description="You haven't completed any match predictions yet."
+          />
+        }
+      />
+    </View>
+  );
 };
 
 const BetScreen = ({ navigation }) => {
@@ -216,8 +183,22 @@ const BetScreen = ({ navigation }) => {
       <NavigationContext.Provider value={navigation}>
         <Tab.Navigator
           screenOptions={{
-            tabBarActiveTintColor: "#fff",
-            tabBarStyle: { backgroundColor: '#140A35' },
+            tabBarActiveTintColor: COLORS.primary,
+            tabBarInactiveTintColor: COLORS.textMuted,
+            tabBarStyle: {
+              backgroundColor: COLORS.cardBg,
+              elevation: 0,
+              borderBottomWidth: 1,
+              borderBottomColor: COLORS.cardBorder,
+            },
+            tabBarIndicatorStyle: {
+              backgroundColor: COLORS.primary,
+              height: 3,
+            },
+            tabBarLabelStyle: {
+              fontWeight: "700",
+              fontSize: FONT_SIZE.xs,
+            },
           }}
         >
           <Tab.Screen name="Pending" component={ActiveBet} />
@@ -225,18 +206,29 @@ const BetScreen = ({ navigation }) => {
         </Tab.Navigator>
       </NavigationContext.Provider>
     </View>
-  )
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1C0C4F",
-    padding: moderateScale(10)
+    backgroundColor: COLORS.bgPrimary,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.sm,
   },
   backgroundColor: {
     flex: 1,
-    backgroundColor: "#1C0C4F",
+    backgroundColor: COLORS.bgPrimary,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: COLORS.bgPrimary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  listContent: {
+    paddingBottom: SPACING.xl,
   }
 });
+
 export default BetScreen;

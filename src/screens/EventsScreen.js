@@ -1,61 +1,64 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  ScrollView, ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import EventListSingle from "../components/EventListSingle";
 import BallIcon from "../assets/soccer_icon.png";
 import BasketBall from "../assets/basketball_icon.png";
-import { moderateScale } from "react-native-size-matters";
-import AntDesignIcons from 'react-native-vector-icons/AntDesign';
 import NetInfo from '@react-native-community/netinfo';
 import analytics from "@react-native-firebase/analytics";
+import { COLORS, SPACING } from '../theme';
 
-const EventsScreen = ({ navigation, route }) => {
-
+const EventsScreen = ({ navigation }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
-      console.log("Connection type", state);
       setIsConnected(state.isConnected);
     });
 
-    // Unsubscribe
-    unsubscribe();
+    return () => unsubscribe();
   }, []);
 
-  const onPress = async () => {
-    await analytics().logEvent('click_on_football_event');
-    navigation.navigate("Leagues", { sport: "football" })
-  }
+  const handleFootballPress = async () => {
+    try {
+      await analytics().logEvent('click_on_football_event');
+    } catch (e) {
+      console.log(e);
+    }
+    navigation.navigate("Leagues", { sport: "football" });
+  };
+
+  const handleBasketballPress = async () => {
+    try {
+      await analytics().logEvent('click_on_basketball_event');
+    } catch (e) {
+      console.log(e);
+    }
+    navigation.navigate("Leagues", { sport: "basketball" });
+  };
 
   return (
-      <View style={styles.container}>
-        <ScrollView>
-          <EventListSingle request={true} onPress={() => navigation.navigate("Leagues", { sport: "football" })} text={"FOOTBALL"} icon={BallIcon}/>
-          {/*<EventListSingle request={true} onPress={() => navigation.navigate("Leagues", { sport: "basketball", liveScore })} text={"BASKETBALL"} icon={BasketBall} />*/}
-        </ScrollView>
-        {/* isConnected &&
-        <BannerAd
-            unitId={adUnitId}
-            size={BannerAdSize.FULL_BANNER}
-            onAdLoaded={() => console.log("Ads loaded")}
-            onAdFailedToLoad={() => {
-              console.log("ads failed to load");
-            }}
-        /> */}
-      </View>
-  )
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <EventListSingle request={true} onPress={handleFootballPress} text={"FOOTBALL"} icon={BallIcon} />
+        <EventListSingle request={true} onPress={handleBasketballPress} text={"BASKETBALL"} icon={BasketBall} />
+      </ScrollView>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1C0C4F",
-    padding: moderateScale(5)
+    backgroundColor: COLORS.bgPrimary,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.sm,
+  },
+  scrollContent: {
+    paddingBottom: SPACING.xl,
   }
 });
 

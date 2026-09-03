@@ -1,94 +1,78 @@
 import React from "react";
-import {View, Text, StyleSheet, Image, ImageBackground, TouchableOpacity} from 'react-native';
+import { View, Text, StyleSheet, Image, ImageBackground } from 'react-native';
 import { moderateScale } from "react-native-size-matters";
-
 import CupMain from "../assets/cup_main.png";
 import ChampionsBackground from '../assets/champions_background.jpg';
 import LinearGradient from "react-native-linear-gradient";
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {useSelector} from 'react-redux';
+import { useSelector } from 'react-redux';
+import { COLORS, FONT_SIZE, RADIUS, SPACING } from "../theme";
 
-const HomeInfoBox = () => {
+const ProfileInfoBox = () => {
   const user = useSelector(state => state.user);
 
   return (
     <View style={styles.container}>
       <ImageBackground source={ChampionsBackground} style={styles.imageBackground}>
         <LinearGradient
-          colors={['#19194B', '#001E22']}
+          colors={['rgba(11, 14, 23, 0.85)', 'rgba(22, 27, 38, 0.95)']}
           style={styles.linearGradient}
         />
-        <Image style={{ width: moderateScale(80), height: moderateScale(80)}} source={CupMain}/>
-        {/* <ButtonBox/> */}
-        <Text adjustsFontSizeToFit={true} numberOfLines={1} style={styles.text}>{user.name}</Text>
+        <View style={styles.avatarBorder}>
+          <Image style={styles.trophyIcon} source={CupMain} />
+        </View>
+        <Text adjustsFontSizeToFit numberOfLines={1} style={styles.nameText}>
+          {user.name || "Predictor"}
+        </Text>
+        <Text style={styles.memberTag}>EDGEPLAY PRO MEMBER</Text>
       </ImageBackground>
     </View>
-  )
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: "center",
-  },
-  text: {
-    fontSize: moderateScale(24),
-    color: "#fff",
-    fontWeight: "bold",
-    marginTop: moderateScale(10)
+    width: "100%",
   },
   imageBackground: {
     resizeMode: "cover",
     justifyContent: "center",
     width: "100%",
-    height: moderateScale(175),
+    height: moderateScale(180),
     alignItems: "center",
+    padding: SPACING.md,
   },
   linearGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: moderateScale(220),
-    opacity: 0.75
+    ...StyleSheet.absoluteFillObject,
   },
-
-  containerButton: {
-    position: 'absolute',
-    left: moderateScale(0),
-    top: moderateScale(5),
-    backgroundColor: "#140A35",
-    borderRadius: moderateScale(5),
-    height: moderateScale(30),
-    width: moderateScale(150),
-    marginHorizontal: moderateScale(10),
-    flexDirection: "row"
-  },
-  cartContainer: {
-    width: "30%",
-    height: "100%",
-    backgroundColor: "blue",
+  avatarBorder: {
+    width: moderateScale(70),
+    height: moderateScale(70),
+    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.cardBg,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
     alignItems: "center",
     justifyContent: "center",
-    borderBottomLeftRadius: moderateScale(5),
-    borderTopLeftRadius: moderateScale(5)
+    marginBottom: SPACING.xs,
   },
-  imageStyle: {
-    width: moderateScale(20),
-    height: moderateScale(20),
+  trophyIcon: {
+    width: moderateScale(48),
+    height: moderateScale(48),
     resizeMode: "contain",
-    marginRight: moderateScale(5)
   },
-  textStyle: {
-    color: "#fff",
-    fontSize: moderateScale(14),
-    fontFamily: "OpenSans-Bold"
+  nameText: {
+    fontSize: FONT_SIZE.xl,
+    color: COLORS.textPrimary,
+    fontWeight: "900",
+    marginTop: moderateScale(4),
   },
-  coinCountContainer: {
-    flexDirection: "row",
-    marginHorizontal: moderateScale(10),
-    justifyContent: "center",
-    alignItems: "center"
+  memberTag: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.primary,
+    fontWeight: "700",
+    letterSpacing: 1,
+    marginTop: moderateScale(2),
   }
 });
 
-export default HomeInfoBox;
+export default ProfileInfoBox;

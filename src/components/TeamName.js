@@ -8,54 +8,73 @@ import {
 } from "react-native";
 import { moderateScale } from "react-native-size-matters";
 import defaultImage from "../assets/default_team.png";
+import { COLORS, FONT_SIZE, RADIUS } from "../theme";
 
-const TeamName = ({left, teamName, teamLogo}) => {
+const TeamName = ({ left, teamName, teamLogo }) => {
+  const correctUrl = teamLogo && Platform.OS === 'ios'
+    ? teamLogo.split("?")[0].replace("http", "https")
+    : teamLogo;
 
-  // console.log("team logo", teamLogo)
-
-  const correctUrl = Platform.OS == 'ios' ? teamLogo.split("?")[0].replace("http", "https") : teamLogo;
-
-  const renderCorrectDirection = () => {
-    if(left){
-      return (
-        <View style={styles.container}>
-          <Text adjustsFontSizeToFit numberOfLines={2} style={styles.text}>{teamName}</Text>
-          {teamLogo? <Image style={styles.image} source={{ uri: correctUrl }}/> : <Image style={styles.image} source={defaultImage}/> }
+  return (
+    <View style={[styles.container, left && styles.containerRight]}>
+      {!left && (
+        <View style={styles.imageWrapper}>
+          {teamLogo ? (
+            <Image style={styles.image} source={{ uri: correctUrl }} />
+          ) : (
+            <Image style={styles.image} source={defaultImage} />
+          )}
         </View>
-      )
-    }
-
-    return (
-      <View style={styles.container}>
-        {teamLogo? <Image style={styles.image} source={{ uri: correctUrl }}/> : <Image style={styles.image} source={defaultImage}/> }
-        <Text adjustsFontSizeToFit numberOfLines={2} style={styles.text}>{teamName}</Text>
-      </View>
-    )
-  };
-
-  return renderCorrectDirection();
+      )}
+      <Text adjustsFontSizeToFit numberOfLines={2} style={styles.text}>
+        {teamName}
+      </Text>
+      {left && (
+        <View style={styles.imageWrapper}>
+          {teamLogo ? (
+            <Image style={styles.image} source={{ uri: correctUrl }} />
+          ) : (
+            <Image style={styles.image} source={defaultImage} />
+          )}
+        </View>
+      )}
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    alignItems: "center"
+    alignItems: "center",
+    maxWidth: moderateScale(130),
   },
-  text: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: moderateScale(14),
-    fontFamily: "OpenSans-Semibold",
-    width: moderateScale(80),
-    textAlign: "center",
+  containerRight: {
+    justifyContent: "flex-end",
+  },
+  imageWrapper: {
+    width: moderateScale(42),
+    height: moderateScale(42),
+    borderRadius: RADIUS.round,
+    backgroundColor: COLORS.cardBgLighter,
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: moderateScale(6),
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
   },
   image: {
-    width: moderateScale(45),
-    height: moderateScale(45),
-    marginRight: moderateScale(5),
-    borderRadius: moderateScale(40),
+    width: moderateScale(34),
+    height: moderateScale(34),
+    borderRadius: RADIUS.round,
     resizeMode: "contain",
-  }
+  },
+  text: {
+    color: COLORS.textPrimary,
+    fontWeight: "700",
+    fontSize: FONT_SIZE.xs,
+    width: moderateScale(70),
+    textAlign: "center",
+  },
 });
 
 export default TeamName;

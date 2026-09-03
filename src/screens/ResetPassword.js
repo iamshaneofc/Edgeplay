@@ -1,83 +1,158 @@
-import React, {useState} from 'react';
-import { StyleSheet, Text, View, ImageBackground, Image, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, ImageBackground, TouchableOpacity } from 'react-native';
 import BackgroundImage from "../assets/jobil.jpg";
 import LinearGradient from 'react-native-linear-gradient';
 import { getStatusBarHeight } from 'react-native-status-bar-height';
 import { moderateScale } from 'react-native-size-matters';
 import CustomTextInput from "../components/CustomTextInput";
 import Feather from 'react-native-vector-icons/Feather';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MainButton from "../components/MainButton";
-import arrowImage from "../assets/arrow.png";
+import { COLORS, FONT_SIZE, RADIUS, SPACING, SHADOWS } from "../theme";
 
+const ResetPassword = ({ navigation }) => {
+  const [emailValue, setEmailValue] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
-const ResetPassword = ({ navigation })=>{
+  const handleReset = () => {
+    if (emailValue) setSubmitted(true);
+  };
 
   return (
-      <ImageBackground source={BackgroundImage} style={styles.container}>
-        <LinearGradient
-            colors={['#046572', '#4949D4']}
-            style={styles.linearGradient}
-        />
-        <View style={styles.content}>
-          <View style={{ flexDirection: "row"}}>
-            <Text style={[styles.headerTitles, styles.white]}>Sport</Text>
-            <Text style={[styles.headerTitles, styles.yellow]}>King</Text>
-          </View>
-          <View style={styles.loginSection}>
-            <CustomTextInput placeHolder="E-mail" icon={<Feather style={{ marginRight: moderateScale(10)}} name="at-sign" size={20} color="#B3B3B6" />}/>
-            <MainButton text={"RESET PASSWORD"} color={"#19D8B7"}/>
-          </View>
+    <ImageBackground source={BackgroundImage} style={styles.container}>
+      <LinearGradient
+        colors={['rgba(11, 14, 23, 0.85)', 'rgba(11, 14, 23, 0.98)']}
+        style={styles.linearGradient}
+      />
+      <View style={styles.content}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <MaterialIcons name="arrow-back" size={24} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+
+        <View style={styles.brandRow}>
+          <Text style={styles.brandText}>EDGE<Text style={styles.brandHighlight}>PLAY</Text></Text>
+          <Text style={styles.welcomeText}>Reset Password</Text>
         </View>
-      </ImageBackground>
+
+        <View style={[styles.card, SHADOWS.card]}>
+          {submitted ? (
+            <View style={styles.successWrapper}>
+              <MaterialIcons name="check-circle" size={48} color={COLORS.primary} />
+              <Text style={styles.successTitle}>Reset Email Sent!</Text>
+              <Text style={styles.successDesc}>
+                We have sent password reset instructions to <Text style={{ color: COLORS.textPrimary }}>{emailValue}</Text>.
+              </Text>
+              <MainButton
+                onClick={() => navigation.navigate("Login")}
+                text="BACK TO LOGIN"
+                color={COLORS.primary}
+                textColor="#0B0E17"
+                style={styles.resetBtn}
+              />
+            </View>
+          ) : (
+            <>
+              <Text style={styles.instructionText}>
+                Enter the email address associated with your EdgePlay account and we'll send you instructions to reset your password.
+              </Text>
+
+              <CustomTextInput
+                value={emailValue}
+                onValueChange={setEmailValue}
+                placeHolder="Email Address"
+                icon={<Feather name="at-sign" size={18} color={COLORS.textMuted} />}
+                keyboardType="email-address"
+              />
+
+              <MainButton
+                onClick={handleReset}
+                text="SEND RESET LINK"
+                color={COLORS.primary}
+                textColor="#0B0E17"
+                style={styles.resetBtn}
+              />
+            </>
+          )}
+        </View>
+      </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.bgPrimary,
   },
   linearGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: '100%',
-    opacity: 0.7
+    ...StyleSheet.absoluteFillObject,
   },
   content: {
-    paddingTop: getStatusBarHeight(),
-    alignItems: "center",
-    padding: moderateScale(20),
+    paddingTop: getStatusBarHeight() + SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.xl,
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  headerTitles: {
-    fontSize: moderateScale(50),
-    fontFamily: "GROBOLD",
-    marginTop: moderateScale(50),
-    marginBottom: moderateScale(200)
+  backBtn: {
+    position: "absolute",
+    top: getStatusBarHeight() + SPACING.md,
+    left: SPACING.lg,
+    padding: SPACING.xs,
   },
-  forgetText: {
-    fontSize: moderateScale(14),
-    fontFamily: "OpenSans-Bold",
-    color: "#36C0B0",
-    textDecorationLine: 'underline',
-    marginBottom: moderateScale(10)
+  brandRow: {
+    alignItems: "center",
+    marginBottom: SPACING.xl,
   },
-  white: {
-    color: "#fff"
+  brandText: {
+    fontSize: FONT_SIZE.hero,
+    fontWeight: "900",
+    color: COLORS.textPrimary,
+    letterSpacing: 2,
   },
-  yellow: {
-    color: "#FDE88E"
+  brandHighlight: {
+    color: COLORS.primary,
   },
-  loginSection: {
-    width: "100%"
+  welcomeText: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.xs,
+    fontWeight: "600",
   },
-  newUserText: {
+  card: {
+    width: "100%",
+    backgroundColor: COLORS.cardBg,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  instructionText: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.md,
+    lineHeight: 18,
+  },
+  resetBtn: {
+    marginTop: SPACING.md,
+  },
+  successWrapper: {
+    alignItems: "center",
+    paddingVertical: SPACING.md,
+  },
+  successTitle: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    marginTop: SPACING.sm,
+  },
+  successDesc: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textSecondary,
     textAlign: "center",
-    fontSize: moderateScale(14),
-    fontFamily: "OpenSans-Bold",
-    color: "#36C0B0",
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.md,
   }
 });
 

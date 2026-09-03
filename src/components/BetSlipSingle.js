@@ -1,12 +1,12 @@
 import React from "react";
 import {
   View,
-    Text,
-    StyleSheet,
-    TouchableOpacity
+  Text,
+  StyleSheet
 } from "react-native";
-import {  moderateScale } from "react-native-size-matters";
+import { moderateScale } from "react-native-size-matters";
 import { truncate } from "../utils";
+import { COLORS, RADIUS, FONT_SIZE, SPACING, SHADOWS } from "../theme";
 
 const betType = (typeNumber) => {
   switch (typeNumber) {
@@ -24,90 +24,154 @@ const betType = (typeNumber) => {
 };
 
 const BetSlipSingle = ({ eventIsOver, item }) => {
-  const statusText = item.outcome === 1? "Won" : "Lost";
-  const backgroundColor = item.outcome === 1? "#059A32" : "#9A052D";
+  const isWon = item.outcome === 1;
+  const isLost = item.outcome === 0 || item.outcome === 2;
+  const isPending = item.outcome === null || item.outcome === undefined;
+
+  let statusText = "Pending";
+  let statusBg = 'rgba(0, 229, 255, 0.15)';
+  let statusColor = COLORS.secondary;
+
+  if (eventIsOver || !isPending) {
+    if (isWon) {
+      statusText = "Won";
+      statusBg = 'rgba(0, 230, 118, 0.15)';
+      statusColor = COLORS.success;
+    } else if (isLost) {
+      statusText = "Lost";
+      statusBg = 'rgba(255, 82, 82, 0.15)';
+      statusColor = COLORS.danger;
+    }
+  }
+
+  const oddVal = item.odd ? parseFloat(item.odd).toFixed(2) : "1.00";
+  const bidVal = item.bid ? parseFloat(item.bid).toFixed(2) : "0.00";
+  const winVal = (parseFloat(bidVal) * parseFloat(oddVal)).toFixed(2);
 
   return (
-      <View style={styles.container}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%"}}>
-          <View>
-            <Text style={[ styles.colorWhite, styles.teamHeader]}>{item.pickName + ` ${item.spread ? `(${item.spread})` : ""}`}</Text>
-            <Text style={[ styles.colorWhite, styles.gameDetails ]}>{`${betType(item.betType)}: ${item.pickName} ${item.spread? `(${item.spread})` : ""}`}</Text>
-            <Text adjustsFontSizeToFit style={[ styles.colorWhite, styles.gameDetails ]}>{truncate(item.teams, moderateScale(35))}</Text>
-          </View>
-          <View style={{alignItems: "flex-end"}}>
-            <Text style={styles.odd}>{item.odd.toFixed(2)}</Text>
-            <TouchableOpacity disable={true} style={[styles.cashoutButton, { backgroundColor: item.outcome !== null? backgroundColor : "#331493" }]}>
-              <Text style={[ styles.colorWhite]}>{eventIsOver? statusText : "Pending"}</Text>
-            </TouchableOpacity>
-          </View>
+    <View style={[styles.container, SHADOWS.card]}>
+      <View style={styles.topRow}>
+        <View style={styles.infoCol}>
+          <Text style={styles.pickName}>
+            {item.pickName + `${item.spread ? ` (${item.spread})` : ""}`}
+          </Text>
+          <Text style={styles.betTypeLabel}>
+            {`${betType(item.betType)}: ${item.pickName} ${item.spread ? `(${item.spread})` : ""}`}
+          </Text>
+          <Text adjustsFontSizeToFit style={styles.teamsName}>
+            {truncate(item.teams || "", moderateScale(35))}
+          </Text>
         </View>
-        <View style={styles.separator}/>
-        <View style={{ flexDirection: "row", justifyContent: "space-between"}}>
-          <View style={{alignItems: "center"}}>
-            <Text style={[styles.colorWhite, styles.bottomDetailsText]}>Odd</Text>
-            <Text style={[styles.colorWhite, styles.bottomDetailsText]}>{item.odd.toFixed(2)}</Text>
-          </View>
-          <View style={{alignItems: "center"}}>
-            <Text style={[styles.colorWhite, styles.bottomDetailsText]}>Amount</Text>
-            <Text style={[styles.colorWhite, styles.bottomDetailsText]}>{item.bid} Ƀ</Text>
-          </View>
-          <View style={{alignItems: "center"}}>
-            <Text style={[styles.colorWhite, styles.bottomDetailsText]}>{ eventIsOver? statusText : "Winning amount"}</Text>
-            <Text style={[styles.colorWhite, styles.bottomDetailsText]}>{(item.bid * item.odd).toFixed(2)} Ƀ</Text>
+        
+        <View style={styles.statusCol}>
+          <Text style={styles.oddValue}>{oddVal}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
+            <Text style={[styles.statusBadgeText, { color: statusColor }]}>
+              {statusText}
+            </Text>
           </View>
         </View>
       </View>
-  )
+
+      <View style={styles.separator} />
+
+      <View style={styles.bottomRow}>
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>Odds</Text>
+          <Text style={styles.statValue}>{oddVal}</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>Stake</Text>
+          <Text style={styles.statValue}>{bidVal} Ƀ</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={styles.statLabel}>{eventIsOver ? statusText : "Potential Payout"}</Text>
+          <Text style={[styles.statValue, { color: isWon ? COLORS.success : COLORS.primary }]}>
+            {winVal} Ƀ
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    backgroundColor: "#140A35",
-    height: moderateScale(125),
-    padding: moderateScale(15),
-    marginBottom: moderateScale(5),
-    borderRadius: moderateScale(10)
+    backgroundColor: COLORS.cardBg,
+    padding: SPACING.md,
+    marginBottom: moderateScale(10),
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
+  },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  infoCol: {
+    flex: 1,
+    paddingRight: SPACING.sm,
+  },
+  pickName: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
+    marginBottom: moderateScale(2),
+  },
+  betTypeLabel: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textSecondary,
+    marginBottom: moderateScale(2),
+  },
+  teamsName: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textMuted,
+  },
+  statusCol: {
+    alignItems: "flex-end",
+  },
+  oddValue: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZE.md,
+    fontWeight: "800",
+    marginBottom: moderateScale(6),
+  },
+  statusBadge: {
+    paddingHorizontal: moderateScale(10),
+    paddingVertical: moderateScale(4),
+    borderRadius: RADIUS.round,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statusBadgeText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: "700",
   },
   separator: {
-    height: moderateScale(0.5),
-    backgroundColor: "#A9B8CC",
+    height: 1,
+    backgroundColor: COLORS.cardBorder,
     width: "100%",
-    marginVertical: moderateScale(5)
+    marginVertical: moderateScale(10),
   },
-  teamHeader: {
-    fontSize: moderateScale(16),
-    fontFamily: "OpenSans-Bold"
+  bottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
-  gameDetails: {
-    fontSize: moderateScale(12),
-    fontFamily: "OpenSans",
-    opacity: 0.7
-  },
-  cashoutButton: {
-    backgroundColor: "#331493",
-    height: moderateScale(35),
-    borderRadius: moderateScale(20),
-    padding: moderateScale(10),
-    width: moderateScale(75),
+  statBox: {
     alignItems: "center",
-    justifyContent: "center"
   },
-  colorWhite: {
-    color: "#fff"
+  statLabel: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textMuted,
+    marginBottom: moderateScale(2),
   },
-  odd: {
-    color: "#4DFB47",
-    fontSize: moderateScale(14),
-    fontFamily: "OpenSans",
-    marginBottom: moderateScale(5)
+  statValue: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: "700",
+    color: COLORS.textPrimary,
   },
-  bottomDetailsText: {
-    fontSize: moderateScale(10),
-    fontFamily: "OpenSans",
-    opacity: 0.7
-  }
 });
 
 export default BetSlipSingle;

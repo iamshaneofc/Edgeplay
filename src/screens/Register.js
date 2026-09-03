@@ -4,12 +4,8 @@ import {
   Text,
   View,
   ImageBackground,
-  Image,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  ScrollView,
-  ActivityIndicator,
-  Platform
+  ScrollView
 } from 'react-native';
 import BackgroundImage from "../assets/jobil.jpg";
 import LinearGradient from 'react-native-linear-gradient';
@@ -24,15 +20,14 @@ import arrowImage from "../assets/arrow.png";
 import { useMutation } from '@apollo/client';
 import { SAVE_DEVICE_INFO, SIGNUP_USER } from "../graph-operations";
 import { useDispatch } from 'react-redux';
-import { initUser, initUserPersit } from '../redux/features/userSlice';
+import { initUserPersit } from '../redux/features/userSlice';
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import analytics from "@react-native-firebase/analytics";
 import { getDeviceInfo } from "../utils";
 import messaging from '@react-native-firebase/messaging';
-
+import { COLORS, FONT_SIZE, RADIUS, SPACING, SHADOWS } from "../theme";
 
 const Register = ({ navigation }) => {
-
   const dispatch = useDispatch();
   const [nameValue, setNameValue] = useState("");
   const [emailValue, setEmailValue] = useState("");
@@ -40,80 +35,72 @@ const Register = ({ navigation }) => {
   const [passwordConfirmationValue, setPasswordConfirmationValue] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errorCompletion, setErrorCompletion] = useState(false)
-  const [errorUsername, setErrorUsername] = useState(false)
-  const [errorPasswordConfirmation, setErrorPasswordConfirmation] = useState(false)
-  const [errorEmail, setErrorEmail] = useState(false)
-  const [fcmtoken, setFcmToken]  = useState("");
+  const [errorCompletion, setErrorCompletion] = useState(false);
+  const [errorUsername, setErrorUsername] = useState(false);
+  const [errorPasswordConfirmation, setErrorPasswordConfirmation] = useState(false);
+  const [errorEmail, setErrorEmail] = useState(false);
+  const [fcmtoken, setFcmToken] = useState("");
 
   useEffect(() => {
-    // Get the device token
     messaging()
       .getToken()
       .then(token => {
-        console.log("token", token)
-        setFcmToken(token)
-      });
+        if (token) setFcmToken(token);
+      })
+      .catch(err => console.log("FCM token error", err));
   }, []);
-
 
   const [signupUser] = useMutation(SIGNUP_USER, {
     onCompleted: async (data) => {
-      // console.log("Data : ", data);
-
-      const { token, user } = data.signupUser;
-      dispatch(initUserPersit({
-        jsWebToken: token,
-        id: user.id,
-        name: user.name,
-        coins: user.coins,
-        bet_won: user.bet_won,
-        bet_lost: user.bet_lost,
-        bet_pending: user.bet_pending
-      }));
-
-      const info = await getDeviceInfo();
-      saveDeviceInfo({
-        variables: {
+      if (data && data.signupUser) {
+        const { token, user } = data.signupUser;
+        dispatch(initUserPersit({
           jsWebToken: token,
-          ...info
+          id: user.id,
+          name: user.name,
+          coins: user.coins,
+          bet_won: user.bet_won,
+          bet_lost: user.bet_lost,
+          bet_pending: user.bet_pending
+        }));
+
+        try {
+          const info = await getDeviceInfo();
+          saveDeviceInfo({
+            variables: {
+              jsWebToken: token,
+              ...info
+            }
+          });
+        } catch (e) {
+          console.log(e);
         }
-      })
 
-      navigation.dispatch(StackActions.popToTop());
-      setLoading(false);
-      navigation.dispatch(
-          StackActions.replace('Home')
-      );
+        navigation.dispatch(StackActions.popToTop());
+        setLoading(false);
+        navigation.dispatch(StackActions.replace('Home'));
+      }
     },
-    onError(error){ // TODO: Fix the error handling
+    onError(error) {
       setLoading(false);
-      if(error.toString().includes("1"))
-        return setErrorUsername(true);
-      if(error.toString("2"))
-        return setErrorEmail(true)
-
-      setErrorCompletion(true)
+      const errStr = error.toString();
+      if (errStr.includes("1")) return setErrorUsername(true);
+      if (errStr.includes("2")) return setErrorEmail(true);
+      setErrorCompletion(true);
     }
   });
 
-
   const [saveDeviceInfo] = useMutation(SAVE_DEVICE_INFO, {
-    onCompleted(data){
-      console.log("Data : ", data);
-    },
-    onError(error){
+    onError(error) {
       console.log("Error ", error);
     }
   });
 
-
   const handleSignupUser = async () => {
-    if(!nameValue || !emailValue || !passwordConfirmationValue || !passwordValue || loading)
+    if (!nameValue || !emailValue || !passwordConfirmationValue || !passwordValue || loading)
       return setErrorCompletion(true);
 
-    //TODO: Handle error: if confirmation password incorrect
-    if(passwordValue !== passwordConfirmationValue)
+    if (passwordValue !== passwordConfirmationValue)
       return setErrorPasswordConfirmation(true);
 
     setLoading(true);
@@ -125,137 +112,194 @@ const Register = ({ navigation }) => {
         invitedBy: inviteCode,
         fcmtoken: fcmtoken
       }
-    })
+    });
 
-    await analytics().logEvent('create_user_button');
-
+    try {
+      await analytics().logEvent('create_user_button');
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   const handleAlreadyRegistered = async () => {
-    await analytics().logEvent('already_registered_user');
-    navigation.navigate("Login")
-  }
+    try {
+      await analytics().logEvent('already_registered_user');
+    } catch (e) {
+      console.log(e);
+    }
+    navigation.navigate("Login");
+  };
 
-
-  const loadingComp =  <ActivityIndicator size="large" color="#fff"/>;
+  const clearErrors = () => {
+    setErrorUsername(false);
+    setErrorEmail(false);
+    setErrorCompletion(false);
+    setErrorPasswordConfirmation(false);
+  };
 
   return (
-      <ImageBackground source={BackgroundImage} style={styles.container}>
-        <LinearGradient
-            colors={['#046572', '#4949D4']}
-            style={styles.linearGradient}
-        />
-        <KeyboardAwareScrollView>
-          <ScrollView keyboardShouldPersistTaps="handled">
-            <View style={styles.content}>
-              <View style={{ flexDirection: "row"}}>
-                <Text style={[styles.headerTitles, styles.white]}>Sport</Text>
-                <Text style={[styles.headerTitles, styles.yellow]}>King</Text>
-              </View>
-              <View style={styles.loginSection}>
-                <CustomTextInput value={nameValue} onValueChange={(v) =>{
-                  setErrorUsername(false);
-                  setErrorEmail(false)
-                  setErrorCompletion(false);
-                  setErrorPasswordConfirmation(false)
-                  setNameValue(v);
-                }} placeHolder="Username" icon={<AntDesign style={{ marginRight: moderateScale(10)}} name="user" size={20} color="#B3B3B6" />}/>
-                { errorUsername && <Text style={styles.errorText}>Username not available !</Text> }
-                <CustomTextInput value={emailValue} onValueChange={(v) => {
-                  setErrorUsername(false);
-                  setErrorEmail(false)
-                  setErrorCompletion(false);
-                  setErrorPasswordConfirmation(false)
-                  setEmailValue(v);
-                }} placeHolder="E-mail" icon={<Feather style={{ marginRight: moderateScale(10)}} name="at-sign" size={20} color="#B3B3B6" />}/>
-                { errorEmail && <Text style={styles.errorText}>You already have an account with that email !</Text> }
-                <CustomTextInput value={passwordValue} onValueChange={(v) => {
-                  setErrorUsername(false);
-                  setErrorEmail(false)
-                  setErrorCompletion(false);
-                  setErrorPasswordConfirmation(false)
-                  setPasswordValue(v);
-                }} password placeHolder="Password" icon={<AntDesign style={{ marginRight: moderateScale(10)}} name="lock" size={20} color="#B3B3B6" />}/>
-                <CustomTextInput value={passwordConfirmationValue} onValueChange={(v) => {
-                  setErrorUsername(false);
-                  setErrorEmail(false)
-                  setErrorCompletion(false)
-                  setErrorPasswordConfirmation(false)
-                  setPasswordConfirmationValue(v)
-                }} password placeHolder="Confirm Password" icon={<AntDesign style={{ marginRight: moderateScale(10)}} name="lock" size={20} color="#B3B3B6" />}/>
-                { errorPasswordConfirmation && <Text style={styles.errorText}>The password don't match!</Text> }
-                <CustomTextInput value={inviteCode} onValueChange={(v) => {
-                  setErrorUsername(false);
-                  setErrorEmail(false)
-                  setErrorCompletion(false);
-                  setErrorPasswordConfirmation(false)
-                  setInviteCode(v);
-                }} placeHolder="Invite Code(Optional)" icon={<AntDesign style={{ marginRight: moderateScale(10)}} name="barcode" size={20} color="#B3B3B6" />}/>
-                { errorCompletion && <Text style={styles.errorText}>Please complete the form</Text> }
-                <MainButton onClick={handleSignupUser} text={loading? loadingComp : "CREATE AN ACCOUNT"} color={"#19D8B7"} arrow={arrowImage}/>
-                <TouchableOpacity onPress={handleAlreadyRegistered}>
-                  <Text style={styles.newUserText}>Already have an account? {"\n"}  Click here to sign in </Text>
-                </TouchableOpacity>
-              </View>
+    <ImageBackground source={BackgroundImage} style={styles.container}>
+      <LinearGradient
+        colors={['rgba(11, 14, 23, 0.85)', 'rgba(11, 14, 23, 0.98)']}
+        style={styles.linearGradient}
+      />
+      <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            <View style={styles.brandRow}>
+              <Text style={styles.brandText}>EDGE<Text style={styles.brandHighlight}>PLAY</Text></Text>
+              <Text style={styles.welcomeText}>Create Your Predictor Account</Text>
             </View>
-          </ScrollView>
-        </KeyboardAwareScrollView>
-      </ImageBackground>
+
+            <View style={[styles.registerCard, SHADOWS.card]}>
+              <CustomTextInput
+                value={nameValue}
+                onValueChange={(v) => {
+                  clearErrors();
+                  setNameValue(v);
+                }}
+                placeHolder="Username"
+                icon={<AntDesign name="user" size={18} color={COLORS.textMuted} />}
+              />
+              {errorUsername && <Text style={styles.errorText}>Username not available!</Text>}
+
+              <CustomTextInput
+                value={emailValue}
+                onValueChange={(v) => {
+                  clearErrors();
+                  setEmailValue(v);
+                }}
+                placeHolder="Email Address"
+                icon={<Feather name="at-sign" size={18} color={COLORS.textMuted} />}
+                keyboardType="email-address"
+              />
+              {errorEmail && <Text style={styles.errorText}>An account already exists with that email!</Text>}
+
+              <CustomTextInput
+                value={passwordValue}
+                onValueChange={(v) => {
+                  clearErrors();
+                  setPasswordValue(v);
+                }}
+                password
+                placeHolder="Password"
+                icon={<AntDesign name="lock" size={18} color={COLORS.textMuted} />}
+              />
+
+              <CustomTextInput
+                value={passwordConfirmationValue}
+                onValueChange={(v) => {
+                  clearErrors();
+                  setPasswordConfirmationValue(v);
+                }}
+                password
+                placeHolder="Confirm Password"
+                icon={<AntDesign name="lock" size={18} color={COLORS.textMuted} />}
+              />
+              {errorPasswordConfirmation && <Text style={styles.errorText}>Passwords do not match!</Text>}
+
+              <CustomTextInput
+                value={inviteCode}
+                onValueChange={(v) => {
+                  clearErrors();
+                  setInviteCode(v);
+                }}
+                placeHolder="Invite Code (Optional)"
+                icon={<AntDesign name="barcode" size={18} color={COLORS.textMuted} />}
+              />
+
+              {errorCompletion && <Text style={styles.errorText}>Please fill in all required fields.</Text>}
+
+              <MainButton
+                onClick={handleSignupUser}
+                loading={loading}
+                text="CREATE ACCOUNT"
+                color={COLORS.primary}
+                textColor="#0B0E17"
+                arrow={arrowImage}
+                style={styles.signUpBtn}
+              />
+
+              <TouchableOpacity onPress={handleAlreadyRegistered} style={styles.alreadyRegisteredBtn}>
+                <Text style={styles.alreadyText}>
+                  Already have an account? <Text style={styles.highlightText}>Sign In</Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAwareScrollView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.bgPrimary,
   },
   linearGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: '100%',
-    opacity: 0.7
+    ...StyleSheet.absoluteFillObject,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
+    paddingTop: getStatusBarHeight() + SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.xl,
     flex: 1,
-    paddingTop: getStatusBarHeight(),
+    justifyContent: "center",
     alignItems: "center",
-    padding: moderateScale(20),
-    // justifyContent: "space-between"
   },
-  headerTitles: {
-    fontSize: moderateScale(50),
-    fontFamily: "GROBOLD",
-    marginTop: moderateScale(50),
-    marginBottom: moderateScale(100)
+  brandRow: {
+    alignItems: "center",
+    marginBottom: SPACING.lg,
   },
-  forgetText: {
-    fontSize: moderateScale(14),
-    fontFamily: "OpenSans-Bold",
-    color: "#36C0B0",
-    textDecorationLine: 'underline',
-    marginBottom: moderateScale(10)
+  brandText: {
+    fontSize: FONT_SIZE.hero,
+    fontWeight: "900",
+    color: COLORS.textPrimary,
+    letterSpacing: 2,
   },
-  white: {
-    color: "#fff"
+  brandHighlight: {
+    color: COLORS.primary,
   },
-  yellow: {
-    color: "#FDE88E"
+  welcomeText: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.xs,
+    fontWeight: "600",
   },
-  loginSection: {
-    width: "100%"
+  registerCard: {
+    width: "100%",
+    backgroundColor: COLORS.cardBg,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
   },
-  newUserText: {
-    textAlign: "center",
-    fontSize: moderateScale(14),
-    fontFamily: "OpenSans-Bold",
-    color: "#36C0B0",
-    textDecorationLine: 'underline',
+  signUpBtn: {
+    marginTop: SPACING.md,
+  },
+  alreadyRegisteredBtn: {
+    marginTop: SPACING.lg,
+    alignItems: "center",
+  },
+  alreadyText: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textSecondary,
+  },
+  highlightText: {
+    color: COLORS.primary,
+    fontWeight: "700",
   },
   errorText: {
-    color: "red",
-    fontSize: moderateScale(14),
-    fontWeight: "bold"
+    color: COLORS.danger,
+    fontSize: FONT_SIZE.xs,
+    fontWeight: "600",
+    marginVertical: moderateScale(2),
+    textAlign: "center",
   }
 });
 

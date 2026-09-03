@@ -11,70 +11,71 @@ import OnBoardingFooter from "../components/onboardings/OnBoardingFooter";
 import { useDispatch } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { initUser } from "../redux/features/userSlice";
+import { COLORS, FONT_SIZE, SPACING } from "../theme";
 
-const Onboardings = ({ navigation })=>{
+const Onboardings = ({ navigation }) => {
   const [slideNumber, setSlideNumber] = useState(0);
   const [isFirstRun, setIsFirstRun] = useState("");
   const [token, setToken] = useState("");
   const dispatch = useDispatch();
 
   useEffect(() => {
-    console.log("Here 1");
-    getToken()
+    getToken();
   }, []);
 
   const getToken = async () => {
-    console.log("Here 2")
     const token = await AsyncStorage.getItem("jsWebToken");
-    console.log("Token", token)
     setToken(token);
 
-    if(token){
+    if (token) {
       dispatch(initUser({ jsWebToken: token }));
-      setIsFirstRun(true)
-    }else{
+      setIsFirstRun(true);
+    } else {
       setIsFirstRun(false);
     }
   };
 
-  console.log("is First Run", isFirstRun);
-
-  getToken();
-
-  if(isFirstRun === ""){
+  if (isFirstRun === "") {
     return (
-      <View style={{ backgroundColor: "#1C0C4F", flex: 1, alignItems: "center", justifyContent: "center"}}>
-        <ActivityIndicator size="large" color="#fff"/>
+      <View style={{ backgroundColor: COLORS.bgPrimary, flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
-    )
+    );
   }
 
   const onNextButton = async () => {
-
-    await analytics().logEvent('next_button_slider');
+    try {
+      await analytics().logEvent('next_button_slider');
+    } catch (e) {
+      console.log(e);
+    }
 
     setSlideNumber(slideNumber + 1);
-    if(slideNumber + 1 === 3){
-      await analytics().logEvent('finish_button_slider');
+    if (slideNumber + 1 === 3) {
+      try {
+        await analytics().logEvent('finish_button_slider');
+      } catch (e) {
+        console.log(e);
+      }
       navigation.navigate("ConnectOptions");
     }
   };
 
-
   return (
     <ImageBackground source={BackgroundImage} style={styles.container}>
       <LinearGradient
-        colors={['#046572', '#4949D4']}
+        colors={['rgba(11, 14, 23, 0.75)', 'rgba(11, 14, 23, 0.95)']}
         style={styles.linearGradient}
       />
       <View style={styles.content}>
-        <View style={{ flexDirection: "row", marginBottom: moderateScale(50)}}>
-          <Text style={[styles.headerTitles, styles.white]}>Sport</Text>
-          <Text style={[styles.headerTitles, styles.yellow]}>King</Text>
+        <View style={styles.brandRow}>
+          <Text style={styles.brandText}>EDGE<Text style={styles.brandHighlight}>PLAY</Text></Text>
         </View>
-        <View style={{ flexDirection: "row"}}>
-          <OnBoardingInfoBox slideNumber={slideNumber}/>
+        
+        <View style={styles.infoWrapper}>
+          <OnBoardingInfoBox slideNumber={slideNumber} />
         </View>
+        
         <OnBoardingFooter currentPage={slideNumber} numPages={3} onPress={onNextButton} />
       </View>
     </ImageBackground>
@@ -84,33 +85,36 @@ const Onboardings = ({ navigation })=>{
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.bgPrimary,
   },
   linearGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: '100%',
-    opacity: 0.7
+    ...StyleSheet.absoluteFillObject,
   },
   content: {
-    paddingTop: getStatusBarHeight(),
+    paddingTop: getStatusBarHeight() + SPACING.lg,
     alignItems: "center",
-    padding: moderateScale(20),
-    flex: 1
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.xl,
+    flex: 1,
+    justifyContent: "space-between",
   },
-  headerTitles: {
-    fontSize: moderateScale(50),
-    fontFamily: "GROBOLD",
-    marginTop: moderateScale(50),
-    marginBottom: moderateScale(100)
+  brandRow: {
+    marginTop: moderateScale(30),
+    alignItems: "center",
   },
-  white: {
-    color: "#fff"
+  brandText: {
+    fontSize: FONT_SIZE.hero,
+    fontWeight: "900",
+    color: COLORS.textPrimary,
+    letterSpacing: 2,
   },
-  yellow: {
-    color: "#FDE88E"
-  }
+  brandHighlight: {
+    color: COLORS.primary,
+  },
+  infoWrapper: {
+    width: "100%",
+    marginVertical: SPACING.xl,
+  },
 });
 
 export default Onboardings;

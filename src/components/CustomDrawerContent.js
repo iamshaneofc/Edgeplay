@@ -7,70 +7,101 @@ import React from "react";
 import {
   View,
   StyleSheet,
-  Text, Image, TouchableOpacity,
+  Text, Image
 } from 'react-native';
 import { moderateScale } from "react-native-size-matters";
-import profilePhotos2  from "../assets/example_profile.jpg";
+import profilePhotos2 from "../assets/example_profile.jpg";
 import { useSelector } from 'react-redux';
 import AntDesignIcons from "react-native-vector-icons/AntDesign";
+import { COLORS, FONT_SIZE, RADIUS, SPACING } from '../theme';
 
 const CustomDrawerContent = (props) => {
   const user = useSelector(state => state.user);
   return (
-    <DrawerContentScrollView {...props}>
+    <DrawerContentScrollView {...props} style={styles.drawerScrollView}>
       <View style={styles.header}>
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Image
-            style={{
-              width: moderateScale(60),
-              height: moderateScale(60),
-              borderRadius: moderateScale(35),
-              overflow: "hidden",
-              borderWidth: moderateScale(1.5),
-              borderColor: "grey",
-            }}
-            source={profilePhotos2}  />
-          <Text style={styles.headerText}>{user.name? user.name : "User"}</Text>
+        <View style={styles.brandRow}>
+          <Text style={styles.brandText}>EDGE<Text style={styles.brandHighlight}>PLAY</Text></Text>
+        </View>
+
+        <View style={styles.profileContainer}>
+          <Image style={styles.avatar} source={profilePhotos2} />
+          <View style={styles.profileInfo}>
+            <Text style={styles.headerText}>{user.name ? user.name : "Predictor"}</Text>
+            <Text style={styles.subText}>{user.email ? user.email : "Pro Member"}</Text>
+          </View>
         </View>
       </View>
-      <DrawerItemList {...props}/>
-      <View style={styles.separator}/>
+
+      <DrawerItemList {...props} />
+
+      <View style={styles.separator} />
+
       <DrawerItem
         label="Profile"
-        onPress={() => props.navigation.navigate("MyProfile")}
-        inactiveTintColor={"#fff"}
-        activeBackgroundColor={"#140A35"}
-        icon={({ focused, color, size }) => <AntDesignIcons name="user" size={moderateScale(18)} color="#fff" />}
-      />
-      <DrawerItem
-        label="Opsyon"
-        onPress={() => props.navigation.navigate("Setting")}
-        inactiveTintColor={"#fff"}
-        activeBackgroundColor={"#140A35"}
-        icon={({ focused, color, size }) => <AntDesignIcons name="setting" size={moderateScale(18)} color="#fff" />}
+        onPress={() => props.navigation.navigate("Profile")}
+        inactiveTintColor={COLORS.textPrimary}
+        activeBackgroundColor={COLORS.cardBg}
+        icon={({ focused, color, size }) => (
+          <AntDesignIcons name="user" size={moderateScale(18)} color={COLORS.primary} />
+        )}
       />
     </DrawerContentScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  drawerScrollView: {
+    backgroundColor: COLORS.bgPrimary,
+  },
   header: {
-    backgroundColor: "#140A35",
-    width: "100%",
-    height: moderateScale(125),
-    justifyContent: "center",
-    alignItems: "center"
+    backgroundColor: COLORS.cardBg,
+    padding: SPACING.md,
+    paddingTop: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.cardBorder,
+    marginBottom: SPACING.sm,
+  },
+  brandRow: {
+    marginBottom: SPACING.md,
+  },
+  brandText: {
+    fontSize: FONT_SIZE.xl,
+    fontWeight: "900",
+    color: COLORS.textPrimary,
+    letterSpacing: 1.5,
+  },
+  brandHighlight: {
+    color: COLORS.primary,
+  },
+  profileContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  avatar: {
+    width: moderateScale(50),
+    height: moderateScale(50),
+    borderRadius: RADIUS.round,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
+  profileInfo: {
+    marginLeft: SPACING.sm,
   },
   headerText: {
-    fontSize: moderateScale(20),
-    color: "#fff",
-    fontFamily: "OpenSans-Bold",
-    marginTop: moderateScale(5)
+    fontSize: FONT_SIZE.md,
+    color: COLORS.textPrimary,
+    fontWeight: "700",
+  },
+  subText: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textMuted,
   },
   separator: {
     width: "100%",
-    height: moderateScale(0.5),
-    backgroundColor: "grey"
+    height: 1,
+    backgroundColor: COLORS.cardBorder,
+    marginVertical: SPACING.sm,
   }
 });
 
